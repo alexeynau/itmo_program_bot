@@ -12,7 +12,7 @@ COPY src ./src
 COPY data ./data
 
 # Build the application in release mode
-RUN cargo build --release
+RUN cargo build --release --bin tg_bot
 
 # Stage 2: Runtime stage
 FROM debian:bookworm-slim
