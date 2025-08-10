@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  tg-bot:
+    build:
+      context: ./tg_bot
+      dockerfile: Dockerfile
+    container_name: itmo_program_bot
+    restart: unless-stopped
+    environment:
+      - TELOXIDE_TOKEN=${TELOXIDE_TOKEN}
+      - YANDEX_GPT_API_KEY=${YANDEX_GPT_API_KEY}
+      - YANDEX_GPT_API_URL=${YANDEX_GPT_API_URL}
+      - YANDEX_FOLDER_ID=${YANDEX_FOLDER_ID}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
