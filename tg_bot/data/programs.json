@@ -1,0 +1,10 @@
+{
+  "ai": {
+    "url": "https://abit.itmo.ru/program/master/ai",
+    "courses": ["Математика для AI", "Нейросетевые модели", "..."]
+  },
+  "ai_product": {
+    "url": "https://abit.itmo.ru/program/master/ai_product",
+    "courses": ["Продуктовый менеджмент AI", "Data Engineering", "..."]
+  }
+}
