@@ -32,7 +32,7 @@ impl YandexGPTClient {
             messages: vec![
                 Message {
                     role: Role::system,
-                    text:  system_prompt.to_string(),
+                    text: system_prompt.to_string(),
                 },
                 Message {
                     role: Role::user,
@@ -51,6 +51,9 @@ impl YandexGPTClient {
         if response.status().is_success() {
             let summary: YandexGPTResponse = response.json().await?;
             let text = summary.result.alternatives[0].message.text.clone();
+            println!("request: {}", user_text);
+            println!("system prompt: {}", system_prompt);
+            println!("answer: {}", text);
             Ok(text)
         } else {
             Err(anyhow::anyhow!("Failed to get summary"))

@@ -70,9 +70,11 @@ pub struct FaqItem {
     pub answer: String,
 }
 
-pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Box<dyn std::error::Error>> {
+pub fn parse_master_program_html(
+    html_content: &str,
+) -> Result<MasterProgram, Box<dyn std::error::Error>> {
     let document = Html::parse_document(html_content);
-    
+
     // Extract program title
     let title_selector = Selector::parse("h1.Information_information__header__fab3I")?;
     let title = document
@@ -88,11 +90,10 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
         .next()
         .map(|e| e.inner_html())
         .unwrap_or_default();
-    
-    
+
     let mut about_lead = String::new();
     let mut about_desc = String::new();
-    
+
     if !script_content.is_empty() {
         if let Ok(json_data) = serde_json::from_str::<serde_json::Value>(&script_content) {
             if let Some(about_obj) = json_data
@@ -101,12 +102,14 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
                 .and_then(|pp| pp.get("jsonProgram"))
                 .and_then(|jp| jp.get("about"))
             {
-                about_lead = about_obj.get("lead")
+                about_lead = about_obj
+                    .get("lead")
                     .and_then(|v| v.as_str())
                     .unwrap_or_default()
                     .to_string();
-                
-                about_desc = about_obj.get("desc")
+
+                about_desc = about_obj
+                    .get("desc")
                     .and_then(|v| v.as_str())
                     .unwrap_or_default()
                     .replace("<br>", "\n")
@@ -114,7 +117,7 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
             }
         }
     }
-    
+
     let description = if !about_lead.is_empty() && !about_desc.is_empty() {
         format!("{}\n\n{}", about_lead, about_desc)
     } else {
@@ -147,7 +150,8 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
     let accreditation = cards.get(6).map(|s| s.contains("да")).unwrap_or(false);
 
     // Extract special programs
-    let special_programs = cards.get(7)
+    let special_programs = cards
+        .get(7)
         .map(|s| s.split(", ").map(|p| p.trim().to_string()).collect())
         .unwrap_or_default();
 
@@ -173,32 +177,27 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
         .map(|e| e.inner_html().trim().to_string())
         .collect();
 
-    let budget_places = places.get(0)
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0);
-    let target_places = places.get(1)
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0);
-    let contract_places = places.get(2)
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0);
+    let budget_places = places.get(0).and_then(|s| s.parse().ok()).unwrap_or(0);
+    let target_places = places.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+    let contract_places = places.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
 
     // Extract program manager info
-    let manager_name_selector = Selector::parse(".Information_manager__name__ecPmn div:nth-child(2)")?;
+    let manager_name_selector =
+        Selector::parse(".Information_manager__name__ecPmn div:nth-child(2)")?;
     let manager_name = document
         .select(&manager_name_selector)
         .next()
         .map(|e| e.inner_html().trim().to_string())
         .unwrap_or_default();
 
-    let manager_email_selector = Selector::parse("a[href^='mailto:']")?;
+    let manager_email_selector = Selector::parse("a[href^='mailto:ai']")?;
     let manager_email = document
         .select(&manager_email_selector)
         .next()
         .map(|e| e.inner_html().trim().to_string())
         .unwrap_or_default();
 
-    let manager_phone_selector = Selector::parse("a[href^='tel:']")?;
+    let manager_phone_selector = Selector::parse(".Information_manager__contact__1fPAH a[href^='tel:']")?;
     let manager_phone = document
         .select(&manager_phone_selector)
         .next()
@@ -240,12 +239,12 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
     // Extract admission methods
     let admission_method_selector = Selector::parse(".Accordion_accordion__title__tSP_0 h5")?;
     let admission_desc_selector = Selector::parse(".Accordion_accordion__info__wkCQC div")?;
-    
+
     let method_titles: Vec<String> = document
         .select(&admission_method_selector)
         .map(|e| e.inner_html().trim().to_string())
         .collect();
-    
+
     let method_descriptions: Vec<String> = document
         .select(&admission_desc_selector)
         .map(|e| e.inner_html().trim().to_string())
@@ -262,7 +261,12 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
     let career_opportunities = document
         .select(&career_selector)
         .next()
-        .map(|e| e.inner_html().trim().replace("<br>", "\n").replace("<br><br>", "\n\n"))
+        .map(|e| {
+            e.inner_html()
+                .trim()
+                .replace("<br>", "\n")
+                .replace("<br><br>", "\n\n")
+        })
         .unwrap_or_default();
 
     // Extract average salary (from career section)
@@ -275,10 +279,17 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
     // Extract team members
     let team_name_selector = Selector::parse(".Team_team__name__q2R7T")?;
     let team_position_selector = Selector::parse(".Team_team__position__xB_og")?;
-    
+
     let team_names: Vec<String> = document
         .select(&team_name_selector)
-        .map(|e| e.inner_html().split('<').next().unwrap_or("").trim().to_string())
+        .map(|e| {
+            e.inner_html()
+                .split('<')
+                .next()
+                .unwrap_or("")
+                .trim()
+                .to_string()
+        })
         .collect();
 
     let team_positions: Vec<String> = document
@@ -300,7 +311,8 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
     let partners = vec!["Альфа-Банк".to_string(), "AlfaFuture".to_string()]; // Extracted from the content
 
     // Extract scholarships
-    let scholarship_selector = Selector::parse(".Scholarship_item__cowlU h5, .Scholarship_item__cowlU h4")?;
+    let scholarship_selector =
+        Selector::parse(".Scholarship_item__cowlU h5, .Scholarship_item__cowlU h4")?;
     let scholarship_elements: Vec<String> = document
         .select(&scholarship_selector)
         .map(|e| e.inner_html().trim().to_string())
@@ -308,7 +320,9 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
 
     let mut scholarships = Vec::new();
     for i in (0..scholarship_elements.len()).step_by(2) {
-        if let (Some(name), Some(amount)) = (scholarship_elements.get(i), scholarship_elements.get(i + 1)) {
+        if let (Some(name), Some(amount)) =
+            (scholarship_elements.get(i), scholarship_elements.get(i + 1))
+        {
             scholarships.push(Scholarship {
                 name: name.clone(),
                 amount: amount.clone(),
@@ -328,13 +342,13 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
     // Extract FAQ
     let faq_question_selector = Selector::parse(".Accordion_accordion__title__tSP_0 h5")?;
     let faq_answer_selector = Selector::parse(".Accordion_accordion__info__wkCQC div")?;
-    
+
     // Skip admission methods questions and get FAQ questions
     let all_questions: Vec<String> = document
         .select(&faq_question_selector)
         .map(|e| e.inner_html().trim().to_string())
         .collect();
-    
+
     let all_answers: Vec<String> = document
         .select(&faq_answer_selector)
         .map(|e| e.inner_html().trim().to_string())
@@ -343,7 +357,7 @@ pub fn parse_master_program_html(html_content: &str) -> Result<MasterProgram, Bo
     // Extract only FAQ items (skip first 7 which are admission methods)
     let faq_questions = all_questions.iter().skip(7);
     let faq_answers = all_answers.iter().skip(7);
-    
+
     let faq: Vec<FaqItem> = faq_questions
         .zip(faq_answers)
         .map(|(question, answer)| FaqItem {
